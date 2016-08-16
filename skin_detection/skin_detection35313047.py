@@ -24,9 +24,11 @@ img_lbl_filenames_train  = [
                            ("toddler_mollie_aug07_400.jpg","toddler_mollie_aug07_400.png"),
                            ("Salma-Hayek-face-wi-new-lg.jpg","Salma-Hayek-face-wi-new-lg.png"),
                            ("Matthew_narrowweb__300x381,0.jpg","Matthew_narrowweb__300x381,0.png"),
+                           ("pg42RF.jpg","pg42RF.png"),
+                           ("indianfamilyrandom.jpg","indianfamilyrandom.png"),
                            ("infohiding.jpg","infohiding.png"),
                            ("w_sexy.jpg","w_sexy.png"),
-                           ("m_unsexy_gr.jpg","m_unsexy_gr.png"),
+                           ("unknown.jpg","unknown.png"),
                            ("josh-hartnett-Poster-thumb.jpg","josh-hartnett-Poster-thumb.png"),
                            ("Family_Bryce.jpg","Family_Bryce.png"),
                            ("buck_family.jpg","buck_family.png"),
@@ -35,10 +37,11 @@ img_lbl_filenames_train  = [
                            ("familySri.jpg","familySri.png"),
                            ("Family-Cell-C.jpg","Family-Cell-C.png"),
                            ("family-photo-2005-10.jpg","family-photo-2005-10.png"),
-                           ("MyIndianFamily-2007-1.jpg","MyIndianFamily-2007-1.png"),
                            ("0520962400.jpg","0520962400.png"),
                            ("abbasprize.jpg","abbasprize.png"),
-                           ("tang-wei-1.jpg","tang-wei-1.png"),                          
+                           ("tang-wei-1.jpg","tang-wei-1.png"),
+                           ("YuFamilyPhoto.jpg","YuFamilyPhoto.png"),
+                           ("family_matters_03.jpg","family_matters_03.png")
                            ]
 # test dataset  !!do not change this test dataset!!
 img_lbl_filenames_test = [
@@ -95,8 +98,11 @@ def save_labels_as_image(label_pred, f):
 #%%
 # define a classifier 
 #
-from sklearn.neighbors import KNeighborsClassifier
-clf = KNeighborsClassifier(n_neighbors=15)
+
+from sklearn.ensemble import RandomForestClassifier
+
+clf =RandomForestClassifier(n_estimators=70, criterion='gini', min_samples_split=50)
+
 
 
 #%%
@@ -105,14 +111,10 @@ clf = KNeighborsClassifier(n_neighbors=15)
 print("Loading training images and labels ..")
 t0 = time()
 features, labels = fetch_data(img_lbl_filenames_train)
-
 # reduce training data for saving computation time
 from sklearn.cross_validation import train_test_split
-features, features_NA, labels, labels_NA = train_test_split(features, labels, 
-                                                            test_size=0.90, random_state=2016)
+features, features_NA, labels, labels_NA = train_test_split(features, labels,test_size=0.90, random_state=2016)
 print('done in %.2fs.' % (time() - t0))
-
-
 t0_all = time()
 
 #%%
@@ -120,7 +122,9 @@ t0_all = time()
 #
 print("Training ..")
 t0 = time()
+##clf.fit(features, labels)
 clf.fit(features, labels)
+
 print('done in %.2fs.' % (time() - t0))
 
 
@@ -141,7 +145,9 @@ print("  test : P={0:f}, R={1:f}, F ={2:f}".format(precision_score(labels_test,l
 print('done in %.2fs (should be < 180 seconds).' % (time() - t0_all))
 
 
+
 #%%
+"""
 # save predicted labels for training images
 #
 print("Saving predicted skin regions for ..")
@@ -173,3 +179,4 @@ for f in img_lbl_filenames_test:
     save_labels_as_image(y_pred, f_img)
     print("  test image {0:s}:  P = {1:f}, R = {2:f}, F = {3:f}".format(f_img, precision_score(y_true, y_pred), recall_score(y_true, y_pred),f1_score(y_true, y_pred)))
 print('done in %.2fs.' % (time() - t0))
+"""
