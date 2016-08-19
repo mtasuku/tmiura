@@ -16,7 +16,7 @@ img_lbl_filenames_train  = [
                            ("06Apr03Face.jpg", "06Apr03Face.png"), 
                            ("chenhao0017me9.jpg", "chenhao0017me9.png"),
                            ("our-familly.jpg", "our-familly.png"), 
-                           ("family_bible_study.jpg", "family_bible_study.png"), 
+                      ##    ("family_bible_study.jpg", "family_bible_study.png"), 
                            ("royal_family_fs_108e_2.jpg", "royal_family_fs_108e_2.png"), 
                            ("Kishani_-__n_-_5.jpeg", "Kishani_-__n_-_5.png"),
                            ("Srilankan-Actress-Yamuna-Erandathi-001.jpg","Srilankan-Actress-Yamuna-Erandathi-001.png"),
@@ -25,29 +25,30 @@ img_lbl_filenames_train  = [
                            ("Salma-Hayek-face-wi-new-lg.jpg","Salma-Hayek-face-wi-new-lg.png"),
                            ("Matthew_narrowweb__300x381,0.jpg","Matthew_narrowweb__300x381,0.png"),
                            ("pg42RF.jpg","pg42RF.png"),
-                           ("indianfamilyrandom.jpg","indianfamilyrandom.png"),
+                    ##    ("indianfamilyrandom.jpg","indianfamilyrandom.png"),
                            ("infohiding.jpg","infohiding.png"),
                            ("w_sexy.jpg","w_sexy.png"),
                            ("unknown.jpg","unknown.png"),
                            ("josh-hartnett-Poster-thumb.jpg","josh-hartnett-Poster-thumb.png"),
-                           ("Family_Bryce.jpg","Family_Bryce.png"),
+                       ##    ("Family_Bryce.jpg","Family_Bryce.png"),
                            ("buck_family.jpg","buck_family.png"),
                            ("920480_f520.jpg","920480_f520.png"),
-                           ("friends.jpg","friends.png"),
+                    ##      ("friends.jpg","friends.png"),
                            ("familySri.jpg","familySri.png"),
-                           ("Family-Cell-C.jpg","Family-Cell-C.png"),
+                    ##     ("Family-Cell-C.jpg","Family-Cell-C.png"),
                            ("family-photo-2005-10.jpg","family-photo-2005-10.png"),
-                           ("0520962400.jpg","0520962400.png"),
-                           ("abbasprize.jpg","abbasprize.png"),
+                     ##      ("0520962400.jpg","0520962400.png"),
+                        ##   ("abbasprize.jpg","abbasprize.png"),
                            ("tang-wei-1.jpg","tang-wei-1.png"),
-                           ("YuFamilyPhoto.jpg","YuFamilyPhoto.png"),
-                           ("family_matters_03.jpg","family_matters_03.png")
+                      ##    ("YuFamilyPhoto.jpg","YuFamilyPhoto.png"),
+                      ##     ("family_matters_03.jpg","family_matters_03.png"),
+                        ##   ("family_bible_study.jpg","family_bible_study.png")
                            ]
 # test dataset  !!do not change this test dataset!!
 img_lbl_filenames_test = [
                            ("m(01-32)_gr.jpg", "m(01-32)_gr.png"),
                            ("toddler_mollie_aug07_400.jpg", "toddler_mollie_aug07_400.png"),
-                           ("family4.jpg", "family4.png"), 
+                          ## ("family4.jpg", "family4.png"), 
                            ("obama.jpg", "obama.png"), 
                            ]
 
@@ -101,7 +102,7 @@ def save_labels_as_image(label_pred, f):
 
 from sklearn.ensemble import RandomForestClassifier
 
-clf =RandomForestClassifier(n_estimators=70, criterion='gini', min_samples_split=50)
+clf =RandomForestClassifier(n_estimators=70, criterion='gini', min_samples_split=40)
 
 
 
@@ -147,7 +148,7 @@ print('done in %.2fs (should be < 180 seconds).' % (time() - t0_all))
 
 
 #%%
-"""
+
 # save predicted labels for training images
 #
 print("Saving predicted skin regions for ..")
@@ -179,4 +180,3 @@ for f in img_lbl_filenames_test:
     save_labels_as_image(y_pred, f_img)
     print("  test image {0:s}:  P = {1:f}, R = {2:f}, F = {3:f}".format(f_img, precision_score(y_true, y_pred), recall_score(y_true, y_pred),f1_score(y_true, y_pred)))
 print('done in %.2fs.' % (time() - t0))
-"""
