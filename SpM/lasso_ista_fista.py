@@ -43,7 +43,6 @@ def ista(A, b, l, maxit):
     times, pobj = map(np.array, zip(*pobj))
     return x, pobj, times
 
-#収束条件の追加,デバイアス処理の追加,関数としての行列呼び出し(A = x-U(U.Tx))
 def fista(A, b, l, maxit):
     x = np.zeros(A.shape[1])
     pobj = []
