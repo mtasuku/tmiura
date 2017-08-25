@@ -12,8 +12,7 @@ path_img = "./img/"
 path_lbl = "./lbl/"
 # list of (color image, label image)
 # training dataset
-img_lbl_filenames_train  = [
-                           ("06Apr03Face.jpg", "06Apr03Face.png"), 
+img_lbl_filenames_train  = [                           ("06Apr03Face.jpg", "06Apr03Face.png"), 
                            ("chenhao0017me9.jpg", "chenhao0017me9.png"),
                            ("our-familly.jpg", "our-familly.png"), 
                       ##    ("family_bible_study.jpg", "family_bible_study.png"), 
