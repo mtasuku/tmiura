@@ -35,7 +35,7 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     length = signal.shape[0]    
     signal = np.concatenate([np.zeros([int(width/2)]), signal[0:length], np.zeros([int(width)])],axis=0)
     n_wav = signal.shape[0]
-    print(signal.shape)
+    
     signal_dct = np.zeros((n_wav, 0),dtype=np.float64)
     signal_wl = np.zeros((n_wav, 0),dtype=np.float64)
     
@@ -90,56 +90,57 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps
     MaxiterA = 60
    
     length = len(wav)
-    print('len: '+str(length))
+    
     n = sft.next_fast_len(length)
-    print('n: '+str(n))
+    
     signal = np.zeros((n))
     signal[0:length] = wav[0:length]
      
     h0,h1 = daubcqf(taps,'min')
     L = level
     
-    temp = sft.idct(signal[0:n]) + (1.0)*(wl_weight)* idwt(signal[0:n],h0,h1,L)[0]
-    temp2 = np.concatenate([sft.dct(signal),(1.0)*(wl_weight)* dwt(signal,h0,h1,L)[0]],axis=0)
-    temp = temp.astype(np.double)
-    temp2 = temp2.astype(np.double)
-    print(temp.shape)
-    print(temp2.shape)
-    #measurment
+    original_signal = lambda s: sft.idct(s[0:n]) + (1.0)*(wl_weight)* idwt(s[0:n],h0,h1,L)[0]
+    LSseparate = lambda x: np.concatenate([sft.dct(x),(1.0)*(wl_weight)* dwt(x,h0,h1,L)[0]],axis=0)
     
-
+    
+    #measurment
+    y = signal
+    temp = original_signal(signal)
+    temp2 = LSseparate(signal)
+    
+    temp  = temp.astype(np.float64)
+    temp2 = temp2.astype(np.float64)
     
     #GPSR
     ###############################
     nonzeros = float("Inf")
-    y = signal
-    c = signal
+    
     maxabsThetaTy = max(abs(temp))
     
     
     while nonzeros > max_nnz_rate * n:
             #FISTA
-            tau = sparsify * maxabsThetaTy
-            tolA = 1.0e-7
+            #tau = sparsify * maxabsThetaTy
+            #tolA = 1.0e-7
             
-            fh = (temp,temp2.T)
-            print(fh)
-            c,r = relax.fista_scad(y, fh, tolA, MaxiterA, c, tau)
+            fh = (temp2,temp)
+            print(type(fh))
+            c,r = relax.fista_scad(A=fh, b=y)
             
             #GPSR
             ###################
             #
             ###################
             nonzeros = np.nonzero(c)
-            print('nnz = %d / %d\tat tau = %f\n' % nonzeros, n, tau)
+#            print('nnz = %d / %d\tat tau = %f\n' % nonzeros, n, tau)
             sparsify = sparsify * 2
             if sparsify == 0.166:
                 sparsify = 0.1
                 
-    return             
+    return  c, r         
     ###############################
     
     
 if __name__ == '__main__':
-    filepath = '../../../080180500_5k'
+    filepath = './080180500_5k'
     run_LSdecompFW(filename = filepath)
