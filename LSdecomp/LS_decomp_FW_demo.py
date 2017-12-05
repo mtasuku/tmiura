@@ -35,10 +35,17 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     length = signal.shape[0]    
     signal = np.concatenate([np.zeros([int(width/2)]), signal[0:length], np.zeros([int(width)])],axis=0)
     n_wav = signal.shape[0]
+
     
     signal_dct = np.zeros((n_wav, 0),dtype=np.float64)
     signal_wl = np.zeros((n_wav, 0),dtype=np.float64)
     
+
+    print(signal.shape)
+    signal_dct = np.zeros((n_wav, 0),dtype=np.float64)
+    signal_wl = np.zeros((n_wav, 0),dtype=np.float64)
+    
+
     pwindow = np.zeros(width, dtype=np.float64)
     for i in range(width // 2):
         pwindow[i] = i
@@ -91,17 +98,18 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps
    
     length = len(wav)
     
-    n = sft.next_fast_len(length)
     
+    n = sft.next_fast_len(length)
+
     signal = np.zeros((n))
     signal[0:length] = wav[0:length]
      
     h0,h1 = daubcqf(taps,'min')
     L = level
     
+
     original_signal = lambda s: sft.idct(s[0:n]) + (1.0)*(wl_weight)* idwt(s[0:n],h0,h1,L)[0]
     LSseparate = lambda x: np.concatenate([sft.dct(x),(1.0)*(wl_weight)* dwt(x,h0,h1,L)[0]],axis=0)
-    
     
     #measurment
     y = signal
@@ -114,7 +122,12 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps
     #GPSR
     ###############################
     nonzeros = float("Inf")
+
     
+
+    y = signal
+    c = signal
+
     maxabsThetaTy = max(abs(temp))
     
     
@@ -123,9 +136,15 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps
             #tau = sparsify * maxabsThetaTy
             #tolA = 1.0e-7
             
-            fh = (temp2,temp)
+            A =(temp2.size,temp.size)
+           
+            
+            
+            print('A: ' +str(A))
+            fh = linalg.LinearOperator(shape=A,matvec=temp2,rmatvec=temp)
             print(type(fh))
             c,r = relax.fista_scad(A=fh, b=y)
+
             
             #GPSR
             ###################
@@ -137,10 +156,12 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps
             if sparsify == 0.166:
                 sparsify = 0.1
                 
-    return  c, r         
+
+    return  c, r
     ###############################
     
     
 if __name__ == '__main__':
+
     filepath = './080180500_5k'
     run_LSdecompFW(filename = filepath)
