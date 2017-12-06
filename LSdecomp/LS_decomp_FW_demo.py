@@ -34,7 +34,7 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     
     length = signal.shape[0]    
     signal = np.concatenate([np.zeros([int(width/2)]), signal[0:length], np.zeros([int(width)])],axis=0)
-    n_wav = np.zeros(length)
+    n_wav = length
 
     
     signal_dct = np.zeros(length,dtype=np.float64)
@@ -59,8 +59,8 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     w_s = 0
     w_e = width
 
-    START = np.array([n_wav])
-    END = np.array([n_wav])
+    START = np.empty(n_wav)
+    END = np.empty(n_wav)
     i = 0
     
     while w_e < n_wav:
@@ -73,17 +73,23 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
         signal_dct[w_s:w_e] = signal_dct[w_s:w_e] + pwindow * sig_dct
         signal_wl[w_s:w_e] = signal_wl[w_s:w_e] + pwindow * sig_wl
         
-        w_s = w_s + width / 2
-        w_e = w_e + width / 2
+        w_s = w_s + int(width / 2)
+        w_e = w_e + int(width / 2)
         i+=1
 
-    dct_length = np.shape(signal_dct)
-    wl_length = np.shape(signal_wl)
+    dct_length = np.shape(signal_dct)[0]
+    wl_length = np.shape(signal_wl)[0]
     #raw_length = np.shape(signal)
     
-    signal_dct = signal_dct[width/2+1:dct_length]
-    signal_wl = signal_wl[width/2+1:wl_length]    
+    signal_dct = signal_dct[int(width/2)+1:dct_length]
+    signal_wl = signal_wl[int(width/2)+1:wl_length]    
     #signal_raw = signal[width/2+1:raw_length]
+    
+    signal_dct = (32768.0)*signal_dct
+    signal_dct = signal_dct.astype(np.int16)
+    
+    signal_wl = (32768.0)*signal_wl
+    signal_wl = signal_wl.astype(np.int16)
 
     swf.write(filename +'_F.wav',Fs,signal_dct)
     swf.write(filename +'_W.wav',Fs,signal_wl)
@@ -153,7 +159,7 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000.0/262144.0, sparsify = 0.01, 
             ###################
             cnnz = np.size(np.nonzero(c))
             
-            print('nnz = '+ str(cnnz)+ ' ' + str(n) +' at tau = '+str(tau))
+            print('nnz = '+ str(cnnz)+ ' / ' + str(n) +' at tau = '+str(tau))
             sparsify = sparsify * 2
             if sparsify == 0.166:
                 sparsify = 0.1
