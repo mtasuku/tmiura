@@ -34,22 +34,22 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     
     length = signal.shape[0]    
     signal = np.concatenate([np.zeros([int(width/2)]), signal[0:length], np.zeros([int(width)])],axis=0)
-    n_wav = signal.shape[0]
+    n_wav = np.zeros(length)
 
     
-    signal_dct = np.zeros((n_wav, 0),dtype=np.float64)
-    signal_wl = np.zeros((n_wav, 0),dtype=np.float64)
+    signal_dct = np.zeros(length,dtype=np.float64)
+    signal_wl = np.zeros(length,dtype=np.float64)
     
 
     print(signal.shape)
-    signal_dct = np.zeros((n_wav, 0),dtype=np.float64)
-    signal_wl = np.zeros((n_wav, 0),dtype=np.float64)
+    signal_dct = np.zeros(length,dtype=np.float64)
+    signal_wl = np.zeros(length,dtype=np.float64)
     
 
     pwindow = np.zeros(width, dtype=np.float64)
     for i in range(width // 2):
         pwindow[i] = i
-    for i in range(1, width // 2 + 1):
+    for i in range(0, width // 2 + 1):
         pwindow[-i] = i-1
     pwindow = pwindow // width * 2
     
@@ -91,7 +91,7 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     print('end of run_LSdecomp_FW!!')
 
 
-def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps = 10, 
+def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000.0/262144.0, sparsify = 0.01, taps = 10, 
                level = 3, wl_weight = 1, verbose = False,fc=120):
     
     MaxiterA = 60
@@ -107,57 +107,62 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000/262144, sparsify = 0.01, taps
     h0,h1 = daubcqf(taps,'min')
     L = level
     
-
-    original_signal = lambda s: sft.idct(s[0:n]) + (1.0)*(wl_weight)* idwt(s[0:n],h0,h1,L)[0]
+ 
+    original_signal = lambda s: sft.idct(s[0:n]) + (1.0)*(wl_weight)* idwt(s[n:n*2],h0,h1,L)[0]
     LSseparate = lambda x: np.concatenate([sft.dct(x),(1.0)*(wl_weight)* dwt(x,h0,h1,L)[0]],axis=0)
     
     #measurment
     y = signal
-    temp = original_signal(signal)
-    temp2 = LSseparate(signal)
     
-    temp  = temp.astype(np.float64)
-    temp2 = temp2.astype(np.float64)
+    
+   
     
     #GPSR
     ###############################
-    nonzeros = float("Inf")
+    cnnz = float("Inf")
 
     
 
     y = signal
     c = signal
-
+    
+    
+    
+    temp = LSseparate(y)
+    
+    
+    
+    
     maxabsThetaTy = max(abs(temp))
     
+    #print(type(nonzeros))
     
-    while nonzeros > max_nnz_rate * n:
+    while cnnz > max_nnz_rate * n:
             #FISTA
-            #tau = sparsify * maxabsThetaTy
-            #tolA = 1.0e-7
+            tau = sparsify * maxabsThetaTy
+            tolA = 1.0e-7
             
-            A =(temp2.size,temp.size)
-           
+            fh = (original_signal,LSseparate)
             
-            
-            print('A: ' +str(A))
-            fh = linalg.LinearOperator(shape=A,matvec=temp2,rmatvec=temp)
-            print(type(fh))
-            c,r = relax.fista_scad(A=fh, b=y)
+            c = relax.fista_scad(A=fh, b=y,x=temp,tol=tolA,l=tau,maxiter=MaxiterA )[0]
 
             
             #GPSR
             ###################
             #
             ###################
-            nonzeros = np.nonzero(c)
-#            print('nnz = %d / %d\tat tau = %f\n' % nonzeros, n, tau)
+            cnnz = np.size(np.nonzero(c))
+            
+            print('nnz = '+ str(cnnz)+ ' ' + str(n) +' at tau = '+str(tau))
             sparsify = sparsify * 2
             if sparsify == 0.166:
                 sparsify = 0.1
-                
+    signal_dct = sft.idct(c[0:n])
+    signal_dct = signal_dct[0:length]
+    signal_wl = (1.0) * float(wl_weight) * idwt(c[n:2*n],h0,h1,level)[0] 
+    signal_wl = signal_wl[0:length]
 
-    return  c, r
+    return  signal_dct,signal_wl
     ###############################
     
     
