@@ -11,7 +11,7 @@ import scipy.fftpack as sft
 from rwt import dwt,idwt
 from rwt.wavelets import daubcqf
 import spmlib.solver.relaxations as relax
-import scipy.sparse.linalg as linalg
+
 
 
 def read_file(filename):
@@ -33,15 +33,10 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     Fs,signal = read_file(filename)
     
     length = signal.shape[0]    
-    signal = np.concatenate([np.zeros([int(width/2)]), signal[0:length], np.zeros([int(width)])],axis=0)
+    signal = np.concatenate([np.zeros(int(width/2)), signal[0:length], np.zeros(int(width))],axis=0)
     n_wav = length
 
-    
-    signal_dct = np.zeros(length,dtype=np.float64)
-    signal_wl = np.zeros(length,dtype=np.float64)
-    
-
-    print(signal.shape)
+    #print(signal.shape)
     signal_dct = np.zeros(length,dtype=np.float64)
     signal_wl = np.zeros(length,dtype=np.float64)
     
@@ -81,15 +76,18 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     wl_length = np.shape(signal_wl)[0]
     #raw_length = np.shape(signal)
     
-    signal_dct = signal_dct[int(width/2)+1:dct_length]
-    signal_wl = signal_wl[int(width/2)+1:wl_length]    
+    signal_dct = signal_dct[int(width/2):dct_length]
+    signal_wl = signal_wl[int(width/2):wl_length]    
+    
+    signal_dct=round((signal_dct+1)*65535/2) - 32768
+    signal_wl=round((signal_wl+1)*65535/2) - 32768
     #signal_raw = signal[width/2+1:raw_length]
     
-    signal_dct = (32768.0)*signal_dct
-    signal_dct = signal_dct.astype(np.int16)
+    #signal_dct = (32768.0)*signal_dct
+    #signal_dct = signal_dct.astype(np.int16)
     
-    signal_wl = (32768.0)*signal_wl
-    signal_wl = signal_wl.astype(np.int16)
+    #signal_wl = (32768.0)*signal_wl
+    #signal_wl = signal_wl.astype(np.int16)
 
     swf.write(filename +'_F.wav',Fs,signal_dct)
     swf.write(filename +'_W.wav',Fs,signal_wl)
@@ -97,7 +95,7 @@ def run_LSdecompFW(filename, width = 16384, max_nnz_rate = 8000 / 262144,
     print('end of run_LSdecomp_FW!!')
 
 
-def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000.0/262144.0, sparsify = 0.01, taps = 10, 
+def LSDecompFW(wav, width= 16384, max_nnz_rate=8000.0/262144.0, sparsify = 0.01, taps = 10, 
                level = 3, wl_weight = 1, verbose = False,fc=120):
     
     MaxiterA = 60
@@ -106,58 +104,43 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000.0/262144.0, sparsify = 0.01, 
     
     
     n = sft.next_fast_len(length)
-
+    
     signal = np.zeros((n))
     signal[0:length] = wav[0:length]
      
     h0,h1 = daubcqf(taps,'min')
     L = level
     
- 
-    original_signal = lambda s: sft.idct(s[0:n]) + (1.0)*(wl_weight)* idwt(s[n:n*2],h0,h1,L)[0]
-    LSseparate = lambda x: np.concatenate([sft.dct(x),(1.0)*(wl_weight)* dwt(x,h0,h1,L)[0]],axis=0)
+    
+    #print(n)
+    original_signal = lambda s: sft.idct(s[0:n]) + (1.0)*(wl_weight)*idwt(s[n+1:],h0,h1,L)[0]
+    LSseparate = lambda x: np.concatenate([sft.dct(x),(1.0)*(wl_weight)*dwt(x,h0,h1,L)[0]],axis=0)
     
     #measurment
-    y = signal
-    
-    
-   
-    
-    #GPSR
+    y = signal 
+    #FISTA
     ###############################
     cnnz = float("Inf")
 
     
-
-    y = signal
-    c = signal
-    
-    
-    
+    c = signal 
     temp = LSseparate(y)
-    
-    
-    
+    temp2 = original_signal(temp)
+    print('aaa'+str(temp2.shape))
     
     maxabsThetaTy = max(abs(temp))
     
-    #print(type(nonzeros))
-    
     while cnnz > max_nnz_rate * n:
-            #FISTA
+            
+        #FISTA
             tau = sparsify * maxabsThetaTy
             tolA = 1.0e-7
             
             fh = (original_signal,LSseparate)
             
-            c = relax.fista_scad(A=fh, b=y,x=temp,tol=tolA,l=tau,maxiter=MaxiterA )[0]
-
+            c = relax.fista(A=fh, b=y,x=LSseparate(c),tol=tolA,l=tau,maxiter=MaxiterA )[0]
             
-            #GPSR
-            ###################
-            #
-            ###################
-            cnnz = np.size(np.nonzero(c))
+            cnnz = np.size(np.nonzero(original_signal(c)))
             
             print('nnz = '+ str(cnnz)+ ' / ' + str(n) +' at tau = '+str(tau))
             sparsify = sparsify * 2
@@ -165,9 +148,9 @@ def LSDecompFW(wav, width= 2**14,max_nnz_rate=8000.0/262144.0, sparsify = 0.01, 
                 sparsify = 0.1
     signal_dct = sft.idct(c[0:n])
     signal_dct = signal_dct[0:length]
-    signal_wl = (1.0) * float(wl_weight) * idwt(c[n:2*n],h0,h1,level)[0] 
+    signal_wl = (1.0) * float(wl_weight) * idwt(c[n+1:],h0,h1,level)[0] 
     signal_wl = signal_wl[0:length]
-
+   
     return  signal_dct,signal_wl
     ###############################
     
@@ -176,3 +159,24 @@ if __name__ == '__main__':
 
     filepath = './080180500_5k'
     run_LSdecompFW(filename = filepath)
+    
+    rate, data = swf.read( filepath + '.wav')
+    
+    
+    length = float(len(data)) / rate  # 波形長さ（秒）
+    
+    # FFTのサンプル数
+    N = 512
+    
+    # FFTで用いるハミング窓
+    hammingWindow = np.hamming(N)
+
+    # スペクトログラムを描画
+    pxx, freqs, bins, im = plt.specgram(data, NFFT=N, Fs=rate, noverlap=0, window=hammingWindow)
+    plt.axis([0, length, 0, rate / 2])
+    plt.xlabel("time [second]")
+    plt.ylabel("frequency [Hz]")
+
+    plt.show()
+
+    
