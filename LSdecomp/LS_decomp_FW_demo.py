@@ -34,7 +34,7 @@ def read_file(filename):
     return Fs,data
 
 def run_LSdecompFW(filename, width = 2**14, max_nnz_rate = 8000 / 262144,
-                 sparsify = 0.01, taps = 5, wl_weight = 0.25, verbose = False, fc = 120):
+                 sparsify = 0.01, taps = 10, wl_weight = 0.25, verbose = False, fc = 120):
 
     Fs,signal = read_file(filename)
 
@@ -103,8 +103,8 @@ def run_LSdecompFW(filename, width = 2**14, max_nnz_rate = 8000 / 262144,
     return signal_dct,signal_wl,c,c_list
 #max_nnz_rate=8000.0/262144.0
 
-def LSDecompFW(wav, width= width,max_nnz_rate=max_nnz_rate, sparsify = sparsify, taps = taps,
-               level = level, wl_weight = wl_weight, verbose = verbose,fc=fc):
+def LSDecompFW(wav, width=16384,max_nnz_rate=0.03, sparsify = 0.01, taps = 10,
+               level = 3, wl_weight = 0.5, verbose = False,fc=120):
 
     MaxiterA = 60
 
@@ -156,7 +156,7 @@ def LSDecompFW(wav, width= width,max_nnz_rate=max_nnz_rate, sparsify = sparsify,
             ###################
             cnnz = np.size(np.nonzero(c))
             #maxabsThetaTy = max(abs(c))
-            print('nnz = '+ str(cnnz)+ ' / ' + str(n) +' at tau = '+str(tau))
+            print('nnz = '+ str(cnnz)+ ' / ' + str(n*2) +' at tau = '+str(tau))
             sparsify = sparsify * 2
             if sparsify == 0.166:
                 sparsify = 0.1
