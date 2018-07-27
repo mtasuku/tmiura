@@ -37,16 +37,7 @@ def read_file(filename):
 def run_LSdecompFW(filename, width = 2**14, max_nnz_rate = 8000 / 262144,
                  sparsify = 0.01, taps = 10, wl_weight = 0.25, verbose = False, fc = 120):
 
-"""
-filename : input filename
-width : analyse window size
-max_nnz_rate : The ratio non negative zero component in analyse window size vector
-sparsify :
-taps :
-wl_weight :
-verbose :
-fc :
-"""
+
     Fs,signal = read_file(filename)
 
     length = signal.shape[0]
@@ -180,6 +171,6 @@ def LSDecompFW(wav, width=16384,max_nnz_rate=0.03, sparsify = 0.01, taps = 10,
     ###############################
 if __name__ == '__main__':
     filepath = './TRACK62_11k'
-    max_nnz_rate = 0.01
-    sparsify = 0.03
+    max_nnz_rate = 0.05
+    sparsify = 0.05
     signal_dct,signal_dwt,c,c_list=run_LSdecompFW(filename = filepath,max_nnz_rate=max_nnz_rate,sparsify=sparsify)
